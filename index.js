@@ -37,6 +37,7 @@ const userSchema = new mongoose.Schema({
     state: String,
     pincode: String
   },
+  selfie: String, // To store base64 image data
   loginDate: { type: Date, default: Date.now }
 });
 const User = mongoose.model('User', userSchema);
@@ -61,7 +62,7 @@ app.post('/api/login', async (req, res) => {
   console.log('Request Body:', JSON.stringify(req.body));
   
   try {
-    const { phoneNumber, address, detailedAddress } = req.body;
+    const { phoneNumber, address, detailedAddress, selfie } = req.body;
     if (!phoneNumber || !address) {
       console.log('Validation Failed: Missing phone or address');
       return res.status(400).json({ error: 'Phone and Address are required' });
@@ -70,7 +71,8 @@ app.post('/api/login', async (req, res) => {
     const newUser = new User({ 
       phoneNumber, 
       address,
-      detailedAddress
+      detailedAddress,
+      selfie
     });
     console.log('Saving user to MongoDB...');
     await newUser.save();
