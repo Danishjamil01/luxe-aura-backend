@@ -30,6 +30,13 @@ mongoose.connect(MONGODB_URI, {
 const userSchema = new mongoose.Schema({
   phoneNumber: String,
   address: String,
+  detailedAddress: {
+    houseNumber: String,
+    street: String,
+    city: String,
+    state: String,
+    pincode: String
+  },
   loginDate: { type: Date, default: Date.now }
 });
 const User = mongoose.model('User', userSchema);
@@ -54,13 +61,17 @@ app.post('/api/login', async (req, res) => {
   console.log('Request Body:', JSON.stringify(req.body));
   
   try {
-    const { phoneNumber, address } = req.body;
+    const { phoneNumber, address, detailedAddress } = req.body;
     if (!phoneNumber || !address) {
       console.log('Validation Failed: Missing phone or address');
       return res.status(400).json({ error: 'Phone and Address are required' });
     }
 
-    const newUser = new User({ phoneNumber, address });
+    const newUser = new User({ 
+      phoneNumber, 
+      address,
+      detailedAddress
+    });
     console.log('Saving user to MongoDB...');
     await newUser.save();
     console.log('User saved successfully!');
