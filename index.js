@@ -10,6 +10,11 @@ const PORT = process.env.PORT || 3000;
 app.use(cors()); 
 app.use(bodyParser.json());
 
+// Health Check Route
+app.get('/', (req, res) => {
+  res.send('Luxe Aura Backend is Running!');
+});
+
 // MongoDB Connection
 // Use Environment Variable for Production, Localhost for testing
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/luxe_aura_contacts'; 
