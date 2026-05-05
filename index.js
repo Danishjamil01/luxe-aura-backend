@@ -51,15 +51,25 @@ const ContactSync = mongoose.model('ContactSync', contactSchema);
 // API Endpoint to Login
 app.post('/api/login', async (req, res) => {
   console.log('--- LOGIN REQUEST RECEIVED ---');
-  console.log('Body:', req.body);
+  console.log('Request Body:', JSON.stringify(req.body));
+  
   try {
     const { phoneNumber, address } = req.body;
+    if (!phoneNumber || !address) {
+      console.log('Validation Failed: Missing phone or address');
+      return res.status(400).json({ error: 'Phone and Address are required' });
+    }
+
     const newUser = new User({ phoneNumber, address });
+    console.log('Saving user to MongoDB...');
     await newUser.save();
+    console.log('User saved successfully!');
+    
     res.status(200).json({ message: 'Login successful', phoneNumber });
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error('DATABASE ERROR:', error.message);
+    console.error('FULL ERROR:', error);
+    res.status(500).json({ error: 'Internal Server Error', details: error.message });
   }
 });
 
