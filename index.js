@@ -1,0 +1,85 @@
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Middleware
+app.use(cors()); 
+app.use(bodyParser.json());
+
+// MongoDB Connection
+// Use Environment Variable for Production, Localhost for testing
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/luxe_aura_contacts'; 
+
+mongoose.connect(MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => console.log('Connected to MongoDB Successfully'))
+.catch(err => console.error('Could not connect to MongoDB:', err));
+
+// Define Models
+const userSchema = new mongoose.Schema({
+  phoneNumber: String,
+  address: String,
+  loginDate: { type: Date, default: Date.now }
+});
+const User = mongoose.model('User', userSchema);
+
+const contactSchema = new mongoose.Schema({
+  userName: String,
+  syncDate: Date,
+  contacts: [
+    {
+      name: [String],
+      tel: [String],
+      email: [String]
+    }
+  ]
+});
+
+const ContactSync = mongoose.model('ContactSync', contactSchema);
+
+// API Endpoint to Login
+app.post('/api/login', async (req, res) => {
+  console.log('--- LOGIN REQUEST RECEIVED ---');
+  console.log('Body:', req.body);
+  try {
+    const { phoneNumber, address } = req.body;
+    const newUser = new User({ phoneNumber, address });
+    await newUser.save();
+    res.status(200).json({ message: 'Login successful', phoneNumber });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// API Endpoint to Sync Contacts
+app.post('/api/contacts/sync', async (req, res) => {
+  try {
+    const { user, contacts, syncDate } = req.body;
+    
+    console.log(`Received ${contacts.length} contacts from ${user}`);
+
+    const newSync = new ContactSync({
+      userName: user, // Matches 'user' from frontend
+      syncDate: new Date(syncDate || Date.now()),
+      contacts: contacts
+    });
+
+    await newSync.save();
+    
+    res.status(200).json({ message: 'Contacts saved successfully to MongoDB' });
+  } catch (error) {
+    console.error('Error saving contacts:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});
